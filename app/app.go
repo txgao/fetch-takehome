@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/mikejav/gosts"
 )
 
@@ -23,9 +24,16 @@ type App struct {
 }
 
 func NewApp() *App {
-	server := &App{}
 
-	server.R = chi.NewRouter()
+	// Configuration
+	var appConfig AppConfig
+	cleanenv.ReadEnv(&appConfig)
+
+	r := chi.NewRouter()
+	server := &App{
+		R:      r,
+		Config: appConfig,
+	}
 
 	server.R.Use(middleware.RequestID)
 	server.R.Use(middleware.RealIP)
