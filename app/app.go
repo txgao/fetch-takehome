@@ -1,6 +1,12 @@
 package app
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"log/slog"
@@ -16,16 +22,10 @@ type App struct {
 	Slog   *slog.Logger
 }
 
-type Option func(*App)
-
-func NewApp(opts ...Option) *App {
+func NewApp() *App {
 	server := &App{}
-	for _, opt := range opts {
-		opt(server)
-	}
-	if server.R == nil {
-		server.R = chi.NewRouter()
-	}
+
+	server.R = chi.NewRouter()
 
 	server.R.Use(middleware.RequestID)
 	server.R.Use(middleware.RealIP)
@@ -44,4 +44,30 @@ func NewApp(opts ...Option) *App {
 	server.R.Use(gosts.Header)
 
 	return server
+}
+
+func (app *App) Run() {
+	addr := fmt.Sprintf("%s:%d", app.Config.Host, app.Config.Port)
+	server := &http.Server{Addr: addr, Handler: app.R}
+
+	slog.Info("Started server.", "addr", addr)
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("Failed starting server", "err", err)
+		}
+	}()
+
+	// Capturing signal
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// Waiting for SIGINT (kill -2)
+	<-stop
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("Failed shutdown server", "err", err)
+	}
+	slog.Info("Server exited")
+
 }
