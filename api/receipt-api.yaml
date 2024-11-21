@@ -1,0 +1,90 @@
+openapi: 3.0.0
+info:
+  description: Receipt module
+  title: Receipt
+  version: 1.0.0
+servers:
+  - description: Local
+    url: http://localhost:4000/api
+paths:
+  /process:
+    post:
+      summary: Create a receipt
+      operationId: create_receipt
+      requestBody:
+        description: Request body for creating receipt
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                retailer:
+                  type: string
+                purchaseDate:
+                  type: string
+                purchaseTime:
+                  type: string
+                items:
+                  type: object
+                  description: a list of item
+                  additionalProperties:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Item"
+                total:
+                  type: number
+                  format: double
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
+  /{id}/point:
+    get:
+      operationId: get_receipt_point
+      summary: Get Receipt Point
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: receipt id
+      responses:
+        "200":
+          description: Successful response containing the point of receipt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  point:
+                    type: number
+                    format: double
+                required:
+                  - point
+      tags:
+        - content
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        shortDescription:
+          type: string
+          x-go-extra-tags:
+            validate: required|min_len:1
+        price:
+          type: number
+          format: double
+      
