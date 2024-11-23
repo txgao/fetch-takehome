@@ -1,12 +1,12 @@
 package receipt
 
 import (
-	"fetch-takehome/pkg/receipts"
+	"fetch-takehome/pkg/receipt"
 	"net/http"
 )
 
 type Handle struct {
-	ReceiptService receipts.ReceiptModule
+	ReceiptService receipt.ReceiptModule
 }
 
 func ErrorResponse(statusCode int, message string) *Response {
