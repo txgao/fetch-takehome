@@ -5,25 +5,27 @@
 package db
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Item struct {
-	ItemUuid         uuid.UUID      `json:"item_uuid"`
-	Price            pgtype.Numeric `json:"price"`
-	ShortDescription pgtype.Text    `json:"short_description"`
+	ItemUuid         uuid.UUID   `json:"item_uuid"`
+	Price            float64     `json:"price"`
+	ShortDescription pgtype.Text `json:"short_description"`
 }
 
 type Receipt struct {
-	ReceiptUuid  uuid.UUID      `json:"receipt_uuid"`
-	Total        pgtype.Numeric `json:"total"`
-	PurchaseDate pgtype.Date    `json:"purchase_date"`
-	PurchaseTime pgtype.Time    `json:"purchase_time"`
-	Retailer     string         `json:"retailer"`
+	ReceiptUuid  uuid.UUID `json:"receipt_uuid"`
+	Total        float64   `json:"total"`
+	Retailer     string    `json:"retailer"`
+	PurchaseTime time.Time `json:"purchase_time"`
 }
 
 type ReceiptItem struct {
 	ItemUuid    uuid.UUID `json:"item_uuid"`
 	ReceiptUuid uuid.UUID `json:"receipt_uuid"`
 }
+
