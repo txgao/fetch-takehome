@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/discord-gophers/goapi-gen/runtime"
+	openapi_types "github.com/discord-gophers/goapi-gen/types"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -23,30 +24,38 @@ import (
 
 // Item defines model for Item.
 type Item struct {
-	Price            *float64 `json:"price,omitempty"`
-	ShortDescription *string  `json:"shortDescription,omitempty" validate:"required|min_len:1"`
+	// The total price payed for this item.
+	Price string `json:"price"`
+
+	// The Short Product Description for the item.
+	ShortDescription string `json:"shortDescription"`
 }
 
-// CreateReceiptJSONBody defines parameters for CreateReceipt.
-type CreateReceiptJSONBody struct {
-	// a list of item
-	Items        *CreateReceiptJSONBody_Items `json:"items,omitempty"`
-	PurchaseDate *string                      `json:"purchaseDate,omitempty"`
-	PurchaseTime *string                      `json:"purchaseTime,omitempty"`
-	Retailer     *string                      `json:"retailer,omitempty"`
-	Total        *float64                     `json:"total,omitempty"`
+// Receipt defines model for Receipt.
+type Receipt struct {
+	Items []Item `json:"items"`
+
+	// The date of the purchase printed on the receipt.
+	PurchaseDate openapi_types.Date `json:"purchaseDate"`
+
+	// The time of the purchase printed on the receipt. 24-hour time expected.
+	PurchaseTime string `json:"purchaseTime"`
+
+	// The name of the retailer or store the receipt is from.
+	Retailer string `json:"retailer"`
+
+	// The total amount paid on the receipt.
+	Total string `json:"total"`
 }
 
-// CreateReceiptJSONBody_Items defines parameters for CreateReceipt.
-type CreateReceiptJSONBody_Items struct {
-	AdditionalProperties map[string][]Item `json:"-"`
-}
+// PostReceiptsProcessJSONBody defines parameters for PostReceiptsProcess.
+type PostReceiptsProcessJSONBody Receipt
 
-// CreateReceiptJSONRequestBody defines body for CreateReceipt for application/json ContentType.
-type CreateReceiptJSONRequestBody CreateReceiptJSONBody
+// PostReceiptsProcessJSONRequestBody defines body for PostReceiptsProcess for application/json ContentType.
+type PostReceiptsProcessJSONRequestBody PostReceiptsProcessJSONBody
 
 // Bind implements render.Binder.
-func (CreateReceiptJSONRequestBody) Bind(*http.Request) error {
+func (PostReceiptsProcessJSONRequestBody) Bind(*http.Request) error {
 	return nil
 }
 
@@ -91,22 +100,10 @@ func (resp *Response) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.Encode(resp.body)
 }
 
-// CreateReceiptJSON201Response is a constructor method for a CreateReceipt response.
+// PostReceiptsProcessJSON200Response is a constructor method for a PostReceiptsProcess response.
 // A *Response is returned with the configured status code and content type from the spec.
-func CreateReceiptJSON201Response(body struct {
+func PostReceiptsProcessJSON200Response(body struct {
 	ID string `json:"id"`
-}) *Response {
-	return &Response{
-		body:        body,
-		Code:        201,
-		contentType: "application/json",
-	}
-}
-
-// GetReceiptPointJSON200Response is a constructor method for a GetReceiptPoint response.
-// A *Response is returned with the configured status code and content type from the spec.
-func GetReceiptPointJSON200Response(body struct {
-	Point float64 `json:"point"`
 }) *Response {
 	return &Response{
 		body:        body,
@@ -115,67 +112,26 @@ func GetReceiptPointJSON200Response(body struct {
 	}
 }
 
-// Getter for additional properties for CreateReceiptJSONBody_Items. Returns the specified
-// element and whether it was found
-func (a CreateReceiptJSONBody_Items) Get(fieldName string) (value []Item, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
+// GetReceiptsIDPointsJSON200Response is a constructor method for a GetReceiptsIDPoints response.
+// A *Response is returned with the configured status code and content type from the spec.
+func GetReceiptsIDPointsJSON200Response(body struct {
+	Points *int64 `json:"points,omitempty"`
+}) *Response {
+	return &Response{
+		body:        body,
+		Code:        200,
+		contentType: "application/json",
 	}
-	return
-}
-
-// Setter for additional properties for CreateReceiptJSONBody_Items
-func (a *CreateReceiptJSONBody_Items) Set(fieldName string, value []Item) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string][]Item)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for CreateReceiptJSONBody_Items to handle AdditionalProperties
-func (a *CreateReceiptJSONBody_Items) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string][]Item)
-		for fieldName, fieldBuf := range object {
-			var fieldVal []Item
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for CreateReceiptJSONBody_Items to handle AdditionalProperties
-func (a CreateReceiptJSONBody_Items) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
 }
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Create a receipt
-	// (POST /process)
-	CreateReceipt(w http.ResponseWriter, r *http.Request) *Response
-	// Get Receipt Point
-	// (GET /{id}/point)
-	GetReceiptPoint(w http.ResponseWriter, r *http.Request, id string) *Response
+	// Submits a receipt for processing
+	// (POST /receipts/process)
+	PostReceiptsProcess(w http.ResponseWriter, r *http.Request) *Response
+	// Returns the points awarded for the receipt
+	// (GET /receipts/{id}/points)
+	GetReceiptsIDPoints(w http.ResponseWriter, r *http.Request, id string) *Response
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -184,12 +140,12 @@ type ServerInterfaceWrapper struct {
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// CreateReceipt operation middleware
-func (siw *ServerInterfaceWrapper) CreateReceipt(w http.ResponseWriter, r *http.Request) {
+// PostReceiptsProcess operation middleware
+func (siw *ServerInterfaceWrapper) PostReceiptsProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := siw.Handler.CreateReceipt(w, r)
+		resp := siw.Handler.PostReceiptsProcess(w, r)
 		if resp != nil {
 			if resp.body != nil {
 				render.Render(w, r, resp)
@@ -202,8 +158,8 @@ func (siw *ServerInterfaceWrapper) CreateReceipt(w http.ResponseWriter, r *http.
 	handler(w, r.WithContext(ctx))
 }
 
-// GetReceiptPoint operation middleware
-func (siw *ServerInterfaceWrapper) GetReceiptPoint(w http.ResponseWriter, r *http.Request) {
+// GetReceiptsIDPoints operation middleware
+func (siw *ServerInterfaceWrapper) GetReceiptsIDPoints(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// ------------- Path parameter "id" -------------
@@ -215,7 +171,7 @@ func (siw *ServerInterfaceWrapper) GetReceiptPoint(w http.ResponseWriter, r *htt
 	}
 
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := siw.Handler.GetReceiptPoint(w, r, id)
+		resp := siw.Handler.GetReceiptsIDPoints(w, r, id)
 		if resp != nil {
 			if resp.body != nil {
 				render.Render(w, r, resp)
@@ -343,8 +299,8 @@ func Handler(si ServerInterface, opts ...ServerOption) http.Handler {
 	}
 
 	r.Route(options.BaseURL, func(r chi.Router) {
-		r.Post("/process", wrapper.CreateReceipt)
-		r.Get("/{id}/point", wrapper.GetReceiptPoint)
+		r.Post("/receipts/process", wrapper.PostReceiptsProcess)
+		r.Get("/receipts/{id}/points", wrapper.GetReceiptsIDPoints)
 	})
 	return r
 }
@@ -370,16 +326,21 @@ func WithErrorHandler(handler func(w http.ResponseWriter, r *http.Request, err e
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"EUThlwkAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
