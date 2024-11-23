@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  psql:
+    image: postgres:alpine
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pwd
