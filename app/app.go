@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/mikejav/gosts"
 )
@@ -78,4 +79,10 @@ func (app *App) Run() {
 	}
 	slog.Info("Server exited")
 
+}
+
+func HealthCheck(r *chi.Mux) {
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		render.PlainText(w, r, http.StatusText(http.StatusOK))
+	})
 }
