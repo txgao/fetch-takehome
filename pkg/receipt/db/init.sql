@@ -18,10 +18,12 @@ CREATE TABLE IF NOT EXISTS receipt (
 
 CREATE TABLE IF NOT EXISTS receipt_items (
     item_uuid UUID NOT NULL,
-    receipt_uuid UUID NOT NOT NULL
+    receipt_uuid UUID NOT NULL
 );
 
 ALTER TABLE ONLY receipt_items
-    ADD CONSTRAINT receipt_items_pkey PRIMARY KEY (item_uuid, receipt_uuid);
-    ADD CONSTRAINT receipt_items_receipt_uuid_fkey FOREIGN KEY (receipt_uuid) REFERENCES receipt
-    ADD CONSTRAINT receipt_items_item_uuid_fkey FOREIGN KEY (item_uuid) REFERENCES item;
+ADD CONSTRAINT receipt_items_pkey PRIMARY KEY (item_uuid, receipt_uuid);
+ALTER TABLE ONLY receipt_items
+ADD CONSTRAINT receipt_items_receipt_uuid_fkey FOREIGN KEY (receipt_uuid) REFERENCES receipt;
+ALTER TABLE ONLY receipt_items
+ADD CONSTRAINT receipt_items_item_uuid_fkey FOREIGN KEY (item_uuid) REFERENCES item;
