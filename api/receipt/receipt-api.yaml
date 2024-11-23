@@ -4,7 +4,7 @@ info:
     description: A simple receipt processor
     version: 1.0.0
 paths:
-    /receipts/process:
+    /process:
         post:
             summary: Submits a receipt for processing
             description: Submits a receipt for processing
@@ -31,7 +31,7 @@ paths:
 
                 400:
                     description: The receipt is invalid
-    /receipts/{id}/points:
+    /{id}/points:
         get:
             summary: Returns the points awarded for the receipt
             description: Returns the points awarded for the receipt

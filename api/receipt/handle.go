@@ -1,18 +1,12 @@
 package receipt
 
 import (
-	"fetch-takehome/pkg/receipt"
+	"fetch-takehome/pkg/receipts"
 	"net/http"
-
-	"github.com/go-chi/render"
 )
 
 type Handle struct {
-	ReceiptService receipt.ReceiptModule
-}
-
-func (h Handle) HelloPublic(w http.ResponseWriter, r *http.Request) {
-	render.PlainText(w, r, "Hello")
+	ReceiptService receipts.ReceiptModule
 }
 
 func ErrorResponse(statusCode int, message string) *Response {
@@ -24,10 +18,10 @@ func ErrorResponse(statusCode int, message string) *Response {
 
 }
 
-func (h Handle) GetReceiptsIDPoints(w http.ResponseWriter, r *http.Request, id string) *Response {
+func (h Handle) GetIDPoints(w http.ResponseWriter, r *http.Request, id string) *Response {
 	return ErrorResponse(http.StatusNotImplemented, "GetReceiptPoint not implemented")
 }
 
-func (h Handle) PostReceiptsProcess(w http.ResponseWriter, r *http.Request) *Response {
+func (h Handle) PostProcess(w http.ResponseWriter, r *http.Request) *Response {
 	return ErrorResponse(http.StatusNotImplemented, "PostReceipt not implemented")
 }

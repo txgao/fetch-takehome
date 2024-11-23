@@ -48,14 +48,14 @@ type Receipt struct {
 	Total string `json:"total"`
 }
 
-// PostReceiptsProcessJSONBody defines parameters for PostReceiptsProcess.
-type PostReceiptsProcessJSONBody Receipt
+// PostProcessJSONBody defines parameters for PostProcess.
+type PostProcessJSONBody Receipt
 
-// PostReceiptsProcessJSONRequestBody defines body for PostReceiptsProcess for application/json ContentType.
-type PostReceiptsProcessJSONRequestBody PostReceiptsProcessJSONBody
+// PostProcessJSONRequestBody defines body for PostProcess for application/json ContentType.
+type PostProcessJSONRequestBody PostProcessJSONBody
 
 // Bind implements render.Binder.
-func (PostReceiptsProcessJSONRequestBody) Bind(*http.Request) error {
+func (PostProcessJSONRequestBody) Bind(*http.Request) error {
 	return nil
 }
 
@@ -100,9 +100,9 @@ func (resp *Response) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.Encode(resp.body)
 }
 
-// PostReceiptsProcessJSON200Response is a constructor method for a PostReceiptsProcess response.
+// PostProcessJSON200Response is a constructor method for a PostProcess response.
 // A *Response is returned with the configured status code and content type from the spec.
-func PostReceiptsProcessJSON200Response(body struct {
+func PostProcessJSON200Response(body struct {
 	ID string `json:"id"`
 }) *Response {
 	return &Response{
@@ -112,9 +112,9 @@ func PostReceiptsProcessJSON200Response(body struct {
 	}
 }
 
-// GetReceiptsIDPointsJSON200Response is a constructor method for a GetReceiptsIDPoints response.
+// GetIDPointsJSON200Response is a constructor method for a GetIDPoints response.
 // A *Response is returned with the configured status code and content type from the spec.
-func GetReceiptsIDPointsJSON200Response(body struct {
+func GetIDPointsJSON200Response(body struct {
 	Points *int64 `json:"points,omitempty"`
 }) *Response {
 	return &Response{
@@ -127,11 +127,11 @@ func GetReceiptsIDPointsJSON200Response(body struct {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Submits a receipt for processing
-	// (POST /receipts/process)
-	PostReceiptsProcess(w http.ResponseWriter, r *http.Request) *Response
+	// (POST /process)
+	PostProcess(w http.ResponseWriter, r *http.Request) *Response
 	// Returns the points awarded for the receipt
-	// (GET /receipts/{id}/points)
-	GetReceiptsIDPoints(w http.ResponseWriter, r *http.Request, id string) *Response
+	// (GET /{id}/points)
+	GetIDPoints(w http.ResponseWriter, r *http.Request, id string) *Response
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -140,12 +140,12 @@ type ServerInterfaceWrapper struct {
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// PostReceiptsProcess operation middleware
-func (siw *ServerInterfaceWrapper) PostReceiptsProcess(w http.ResponseWriter, r *http.Request) {
+// PostProcess operation middleware
+func (siw *ServerInterfaceWrapper) PostProcess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := siw.Handler.PostReceiptsProcess(w, r)
+		resp := siw.Handler.PostProcess(w, r)
 		if resp != nil {
 			if resp.body != nil {
 				render.Render(w, r, resp)
@@ -158,8 +158,8 @@ func (siw *ServerInterfaceWrapper) PostReceiptsProcess(w http.ResponseWriter, r 
 	handler(w, r.WithContext(ctx))
 }
 
-// GetReceiptsIDPoints operation middleware
-func (siw *ServerInterfaceWrapper) GetReceiptsIDPoints(w http.ResponseWriter, r *http.Request) {
+// GetIDPoints operation middleware
+func (siw *ServerInterfaceWrapper) GetIDPoints(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// ------------- Path parameter "id" -------------
@@ -171,7 +171,7 @@ func (siw *ServerInterfaceWrapper) GetReceiptsIDPoints(w http.ResponseWriter, r 
 	}
 
 	var handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := siw.Handler.GetReceiptsIDPoints(w, r, id)
+		resp := siw.Handler.GetIDPoints(w, r, id)
 		if resp != nil {
 			if resp.body != nil {
 				render.Render(w, r, resp)
@@ -299,8 +299,8 @@ func Handler(si ServerInterface, opts ...ServerOption) http.Handler {
 	}
 
 	r.Route(options.BaseURL, func(r chi.Router) {
-		r.Post("/receipts/process", wrapper.PostReceiptsProcess)
-		r.Get("/receipts/{id}/points", wrapper.GetReceiptsIDPoints)
+		r.Post("/process", wrapper.PostProcess)
+		r.Get("/{id}/points", wrapper.GetIDPoints)
 	})
 	return r
 }
@@ -326,21 +326,20 @@ func WithErrorHandler(handler func(w http.ResponseWriter, r *http.Request, err e
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6yVUW+jRhDHv8pqem+HbUxc68JbW0uVVaWKLvcWUmnNDvFeze52dricFfHdqwVsY0wu",
-	"iXQvCYZh5r/z/83wDLktnTVo2EP6DD7fYimbyzVjGf47sg6JNfr2l84xXCj0OWnH2hpI4csWBVuWO9EE",
-	"CCf3qERhSfBWe6EZyylEgN9l6XYIKSyni2uIwElmpJDhnyxTH7NsmmXqOak/QAS8dyHSM2nzCHUEfmuJ",
-	"V/26YzLuQpS4JauqnEUvvJODI2pubGVYaiNW+CTmye1f59Lus+wpy3yWTR4+jiirIyD8r9KECtL7S5lR",
-	"17WH45t28xVzDmf6jDlqx5eNDiLPLz4QFpDCL7OTZbPOr1ljVh1Bqc26jZ8fi0kiuQ8PXUX5VnpcSX7B",
-	"QiUZhS2aLh2ig6OGUQlrmvvUKj5vYBInySSeT+I5RFBYKiVDCiHdmJGH1F90+RJLunyzEJEsJltbUfsS",
-	"fneYM6pzffOr9FxaiB2TRshS75DGZRl5knWIFJaEZ0vYFyW0FwXZIWZZFcfJ8kb8YckgiRtJ/yK/xFob",
-	"PEpcBM2w/WgOZRmYFk7qHzv3/kEc4H7s2ACwgc1RB/JB+uUwhMTaFPbyVL8Jr4PcY3cd2Ry9t6Eoa24O",
-	"0k1SmPzjs29Ivk0xn8bTODTOOjTSaUjhahpPr9qjb5sBm3Xp/azL30yl9Xyp6K7alJq9kEdJYbl0r4Uu",
-	"NYVIhvC1ghRuredOoe8UQttH9Py7VftQI7eG0TTlpHM7nTfvz776dte1w/7aKjhslPrcKKYKmxveWePb",
-	"HZPE8bvKDjaUCn9PJEm1WW5+XcaTGLGYLJJNPrlW8+VEFYtPxVWMn643yZC0uzfsU61egOXcks/IFRnf",
-	"kL5eCem9fjSoBNs+/AGBRXvsy8npDa823+ROq0aMr8pS0v4ttofwE0bPWtUzZ3X3cX3EEZL6sttQIZ8k",
-	"qePn8yR9yNSfeERqvbpty4T+kiyRkTyk92OnXK9OK+yQWIeHYRAggrDkIA1tH/IT9Vl43caHn4rbqY9H",
-	"5OZx3Fvp2vBycZIRvhWPSI0lr8LTLPeq3IR1Xgx8aJFZXFr3t+1hUJmDYZLFBTjvcLmu6/r/AAAA//95",
-	"EUThlwkAAA==",
+	"H4sIAAAAAAAC/6xVX2/bNhD/KsStb5VtWfGMRm/bDAzGkCFo+hZlAC2eYnYWyR1PTY1A332gJNuyrDQJ",
+	"0JdElo7HH39/js+Q29JZg4Y9pM/g8y2WsnlcM5bhvyPrkFijb3/pHMODQp+TdqytgRS+bFGwZbkTTYFw",
+	"co9KFJYEb7UXmrGcQgT4XZZuh5DCcrq4hgicZEYKHf7JMvUxy6ZZpp6T+gNEwHsXKj2TNo9QR+C3lnjV",
+	"33cMxl2oErdkVZWz6JV3cHAEzY2tDEttxAqfxDy5/esc2n2WPWWZz7LJw8cRZHUEhP9VmlBBen8JM+pY",
+	"eziutJuvmHM402fMUTu+JDqAPH/4QFhACr/MTpLNOr1mjVh1BKU267Z+ftxMEsl9+OgqyrfS40ryCxIq",
+	"yShs0bB0qA6KGkYlrGneU4v4nMAkTpJJPJ/Ec4igsFRKhhRCuzEhD62/6PIlL+nyzUBEsphsbUXtIvzu",
+	"MGdU5/jmV+k5tFA7Bo2Qpd4hjcMy8gTrUCksCc+WsA9KaC8KskObZVUcJ8sb8YclgyRuJP2L/JLX2uJR",
+	"x0XQhO1HOZRl8LRwUv9YufcHcWD3I2MDgw1kjjojH6BfhiE01qawl6f6TXgd4B7ZdWRz9N6GTVlzc5Au",
+	"SSH5x2/fkHzbYj6Np3Egzjo00mlI4WoaT6/ao2+bgM26tk0YredLIHfVptTshTwiCTOlWxbIafqTDOVr",
+	"BSncWs8dIGhpQ8+/W7UPvXNrGE2zjXRup/Nm3eyrb0dbm+3Xkn8YIPW5LkwVNi+8s8a3IyWJ43dtOxhI",
+	"Kvw9GUeqzXLz6zKexIjFZJFs8sm1mi8nqlh8Kq5i/HS9SYbGunvD+NTqBW+cS/EZuSLjG2OvV0J6rx8N",
+	"KsG27/Wg+KI99mVQelnV5pvcadWA8VVZStq/Re5QPnvWqp45q7sr9BFHjNNH25YK+SRJHS/JE+Khhf5E",
+	"Xq9u2/aBTpIlMpKH9H7sUOvVaUAdGurwMdgcIggjDNLA8tAuUV/611V7+KnuOvF3dNg8jnsDWxteLk4w",
+	"wk3wiNQo8KpXmtFdlZswrIsB/61DFpeS/W17qlfmIJRkceGTd6hb13X9fwAAAP//Qiw/z3UJAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
