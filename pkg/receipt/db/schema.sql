@@ -40,7 +40,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.item (
     item_uuid uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    price numeric NOT NULL,
+    price double precision NOT NULL,
     short_description character varying(255)
 );
 
@@ -53,10 +53,9 @@ ALTER TABLE public.item OWNER TO txgao;
 
 CREATE TABLE public.receipt (
     receipt_uuid uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    total numeric NOT NULL,
-    purchase_date date NOT NULL,
-    purchase_time time without time zone NOT NULL,
-    retailer character varying(255) NOT NULL
+    total double precision NOT NULL,
+    retailer character varying(255) NOT NULL,
+    purchase_time timestamp without time zone NOT NULL
 );
 
 
@@ -83,35 +82,11 @@ ALTER TABLE ONLY public.item
 
 
 --
--- Name: receipt_items receipt_items_pkey; Type: CONSTRAINT; Schema: public; Owner: txgao
---
-
-ALTER TABLE ONLY public.receipt_items
-    ADD CONSTRAINT receipt_items_pkey PRIMARY KEY (item_uuid, receipt_uuid);
-
-
---
 -- Name: receipt receipt_pkey; Type: CONSTRAINT; Schema: public; Owner: txgao
 --
 
 ALTER TABLE ONLY public.receipt
     ADD CONSTRAINT receipt_pkey PRIMARY KEY (receipt_uuid);
-
-
---
--- Name: receipt_items receipt_items_item_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: txgao
---
-
-ALTER TABLE ONLY public.receipt_items
-    ADD CONSTRAINT receipt_items_item_uuid_fkey FOREIGN KEY (item_uuid) REFERENCES public.item(item_uuid);
-
-
---
--- Name: receipt_items receipt_items_receipt_uuid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: txgao
---
-
-ALTER TABLE ONLY public.receipt_items
-    ADD CONSTRAINT receipt_items_receipt_uuid_fkey FOREIGN KEY (receipt_uuid) REFERENCES public.receipt(receipt_uuid);
 
 
 --

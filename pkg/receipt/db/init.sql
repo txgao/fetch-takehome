@@ -4,15 +4,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS item (
     item_uuid UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
-    price DECIMAL NOT NULL,
+    price float8 NOT NULL,
     short_description VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS receipt (
     receipt_uuid UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
-    total DECIMAL NOT NULL,
-    purchase_date DATE NOT NULL,
-    purchase_time TIME,
+    total float8 NOT NULL,
+    purchase_time timestamp without time zone NOT NULL,
     retailer VARCHAR(255) NOT NULL
 );
 
