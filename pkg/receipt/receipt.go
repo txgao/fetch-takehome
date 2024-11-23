@@ -2,20 +2,20 @@ package receipt
 
 import (
 	"context"
+	"time"
 
 	"fetch-takehome/pkg/receipt/db"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type (
 	CreateReceiptParams struct {
-		ContentType string
-		Filename    string
-		Category    string
-		TenantUuid  uuid.UUID
-		UserUuid    uuid.UUID
-		CompanyUuid uuid.UUID
+		Total        float64
+		PurchaseDate time.Time
+		PurchaseTime time.Time
+		Retailer     string
 	}
 
 	ReceiptModule interface {
@@ -25,6 +25,17 @@ type (
 
 type ReceiptService struct {
 	pgDb *db.Queries
+}
+
+func NewService(dbPool *pgxpool.Pool) *ReceiptService {
+	DB := db.New(dbPool)
+
+	rs := &ReceiptService{
+		pgDb: DB,
+	}
+
+	return rs
+
 }
 
 func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
