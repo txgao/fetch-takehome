@@ -5,10 +5,9 @@
 2. The given purchaseTime is using the layout "13:01".
 3. The given item prices and total are non negative.
 4. The given item prices added up to total.
-
+5. Using in memory storage but a db schema design is included.
 
 ### Prerequisites
-
 1. Docker
 2. Golang
 
@@ -24,7 +23,6 @@
 
 
 ### Getting Started
-
 To start the app with Docker:
 ```
 docker build -t my-app .
@@ -37,9 +35,7 @@ go mod download
 go run cmd/main.go
 ```
 
-
 ### Running the tests
-
 Curl requests are provided in requests.txt, or you can run tests with the script
 To run tests:
 ```
