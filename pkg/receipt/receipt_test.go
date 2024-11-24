@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 
 func TestCreateReceipt(t *testing.T) {
 
-	rs := NewService(dbPool)
+	rs := NewService()
 
 	receipt, err := rs.CreateReceipt(context.Background(), CreateReceiptParams{
 		Total:        10.01,

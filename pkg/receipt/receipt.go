@@ -52,12 +52,21 @@ const (
 	FourPMHour                 = 16
 )
 
-func NewService(dbPool *pgxpool.Pool) *ReceiptService {
-	DB := db.New(dbPool)
+type Option func(*ReceiptService)
+
+func WithDB(dbPool *pgxpool.Pool) Option {
+	return func(rs *ReceiptService) {
+		rs.pgDb = db.New(dbPool)
+	}
+}
+
+func NewService(options ...Option) *ReceiptService {
 
 	rs := &ReceiptService{
-		pgDb:  DB,
 		inMem: inMemDb.New(),
+	}
+	for _, opt := range options {
+		opt(rs)
 	}
 
 	return rs

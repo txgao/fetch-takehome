@@ -1,18 +1,15 @@
 package main
 
 import (
-	"context"
 	"fetch-takehome/app"
 	"fmt"
 	"net/url"
-	"os"
 
 	receiptH "fetch-takehome/api/receipt"
 	receiptSvc "fetch-takehome/pkg/receipt"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DBConfig struct {
@@ -39,11 +36,11 @@ func main() {
 	cleanenv.ReadEnv(&config)
 
 	server := app.NewApp()
-	dbconn, err := pgxpool.New(context.Background(), config.toDatabaseUrl())
-	if err != nil {
-		os.Exit(-1)
-	}
-	receiptSvc := receiptSvc.NewService(dbconn)
+	// dbconn, err := pgxpool.New(context.Background(), config.toDatabaseUrl())
+	// if err != nil {
+	// 	os.Exit(-1)
+	// }
+	receiptSvc := receiptSvc.NewService()
 
 	receiptHandler := receiptH.Handle{
 		ReceiptService: receiptSvc,
