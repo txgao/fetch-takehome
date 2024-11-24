@@ -10,7 +10,29 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createItem = `-- name: CreateItem :one
+INSERT INTO item
+(price, short_description)
+VALUES(
+    $1, $2
+)
+RETURNING item_uuid
+`
+
+type CreateItemParams struct {
+	Price            float64     `json:"price"`
+	ShortDescription pgtype.Text `json:"short_description"`
+}
+
+func (q *Queries) CreateItem(ctx context.Context, arg CreateItemParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, createItem, arg.Price, arg.ShortDescription)
+	var item_uuid uuid.UUID
+	err := row.Scan(&item_uuid)
+	return item_uuid, err
+}
 
 const createReceipt = `-- name: CreateReceipt :one
 INSERT INTO receipt

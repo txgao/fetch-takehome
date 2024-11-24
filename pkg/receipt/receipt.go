@@ -94,17 +94,6 @@ func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params Crea
 
 	return receiptSvc.inMem.Receipts[uid].ReceiptUuid, nil
 
-	// create_param := db.CreateReceiptParams{
-	// 	Total:        params.Total,
-	// 	PurchaseTime: params.PurchaseTime,
-	// 	Retailer:     params.Retailer,
-	// }
-	// receipt, err := receiptSvc.pgDb.CreateReceipt(ctx, create_param)
-	// if err != nil {
-	// 	return uuid.Nil, err
-	// }
-	// return receipt, nil
-
 }
 
 func (receiptSvc *ReceiptService) GetReceiptPoint(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
@@ -120,24 +109,6 @@ func (receiptSvc *ReceiptService) GetReceiptPoint(ctx context.Context, receipt_i
 	result += calculateItemsPoints(receipt.Items)
 
 	return result, nil
-
-	// result := int64(0)
-	// recipt, err := receiptSvc.pgDb.GetReceiptById(ctx, receipt_id)
-	// if err != nil {
-	// 	if errors.Is(err, pgx.ErrNoRows) {
-	// 		return result, err
-	// 	}
-	// 	return result, err
-	// }
-	// items, err := receiptSvc.pgDb.GetItemsByReceipt(ctx, receipt_id)
-	// if err != nil {
-	// 	return 0, err
-	// }
-
-	// result += calculateReceiptPoints(recipt)
-	// result += calculateItemsPoints(items)
-
-	// return result, nil
 
 }
 
