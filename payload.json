@@ -1,0 +1,58 @@
+[
+  {
+    "retailer": "Target",
+    "purchaseDate": "2022-01-01",
+    "purchaseTime": "13:01",
+    "items": [
+      {
+        "shortDescription": "Mountain Dew 12PK",
+        "price": "6.49"
+      },{
+        "shortDescription": "Emils Cheese Pizza",
+        "price": "12.25"
+      },{
+        "shortDescription": "Knorr Creamy Chicken",
+        "price": "1.26"
+      },{
+        "shortDescription": "Doritos Nacho Cheese",
+        "price": "3.35"
+      },{
+        "shortDescription": "   Klarbrunn 12-PK 12 FL OZ  ",
+        "price": "12.00"
+      }
+    ],
+    "total": "35.35"
+  },
+  {
+    "retailer": "M&M Corner Market",
+    "purchaseDate": "2022-03-20",
+    "purchaseTime": "14:33",
+    "items": [
+      { "shortDescription": "Gatorade", "price": "2.25" },
+      { "shortDescription": "Gatorade", "price": "2.25" },
+      { "shortDescription": "Gatorade", "price": "2.25" },
+      { "shortDescription": "Gatorade", "price": "2.25" }
+    ],
+    "total": "9.00"
+  },
+  {
+    "retailer": "QuickStop",
+    "purchaseDate": "2022-03-21",
+    "purchaseTime": "10:00",
+    "items": [
+      { "shortDescription": "Chips", "price": "1.50" },
+      { "shortDescription": "Soda", "price": "1.75" }
+    ],
+    "total": "3.25"
+  },
+  {
+    "retailer": "BigMart",
+    "purchaseDate": "2022-03-22",
+    "purchaseTime": "18:45",
+    "items": [
+      { "shortDescription": "Cheese", "price": "2.50" },
+      { "shortDescription": "Milk", "price": "1.75" }
+    ],
+    "total": "4.25"
+  }
+]
