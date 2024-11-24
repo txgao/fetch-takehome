@@ -42,7 +42,7 @@ type ReceiptService struct {
 const (
 	PointPerAlphanumeric       = 1
 	PointNoCents               = 50
-	PointMultipleQuater        = 30
+	PointMultipleQuater        = 25
 	PointOddDate               = 6
 	PointTimeInRange           = 10
 	PointEveryTwoItems         = 5
@@ -156,7 +156,7 @@ func calculateReceiptPoints(receipt inMemDb.Receipt) int64 {
 	}
 
 	// 25 points if the total is a multiple of 0.25.
-	if math.Mod(frac, 0.25) == 0 {
+	if receipt.Total != 0 && math.Mod(frac, 0.25) == 0 {
 		points += PointMultipleQuater
 	}
 
@@ -168,11 +168,13 @@ func calculateReceiptPoints(receipt inMemDb.Receipt) int64 {
 
 	// 10 points if the time of purchase is after 2:00pm and before 4:00pm.
 	hour := receipt.PurchaseTime.Hour()
-	if hour > TwoPMHour && hour < FourPMHour {
+	minute := receipt.PurchaseTime.Minute()
+
+	if (hour == TwoPMHour && minute > 0) || (hour > TwoPMHour && hour < FourPMHour) {
 		points += PointTimeInRange
 	}
 
-	return 0
+	return points
 }
 
 func calculateItemsPoints(items []inMemDb.Item) int64 {
@@ -185,7 +187,7 @@ func calculateItemsPoints(items []inMemDb.Item) int64 {
 	// If length of the item description is a multiple of 3, multiply the price by 0.2 and round up
 	for _, item := range items {
 
-		if len(item.ShortDescription)%3 == 0 {
+		if len(item.ShortDescription) != 0 && len(item.ShortDescription)%3 == 0 {
 			cur_point := PointItemPriceMultiplyRate * item.Price
 			points += int64(math.Ceil(cur_point))
 		}
