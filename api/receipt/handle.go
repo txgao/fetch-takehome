@@ -30,6 +30,8 @@ func ErrorResponse(statusCode int, message string) *Response {
 
 }
 
+// Returns the points awarded for the receipt
+// (GET /{id}/points)
 func (h Handle) GetIDPoints(w http.ResponseWriter, r *http.Request, id string) *Response {
 
 	receipt_uuid, err := uuid.Parse(id)
@@ -55,6 +57,8 @@ func (h Handle) GetIDPoints(w http.ResponseWriter, r *http.Request, id string) *
 	return GetIDPointsJSON200Response(body)
 }
 
+// Submits a receipt for processing
+// (POST /process)
 func (h Handle) PostProcess(w http.ResponseWriter, r *http.Request) *Response {
 
 	data := PostProcessJSONBody{}
