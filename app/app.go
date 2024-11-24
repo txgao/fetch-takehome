@@ -13,15 +13,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v2"
 	"github.com/go-chi/render"
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/mikejav/gosts"
 )
 
 type App struct {
-	R      *chi.Mux
-	Config AppConfig
-	Slog   *slog.Logger
+	R          *chi.Mux
+	Config     AppConfig
+	Slog       *slog.Logger
+	HttpLogger *httplog.Logger
 }
 
 func NewApp() *App {
@@ -29,28 +30,27 @@ func NewApp() *App {
 	// Configuration
 	var appConfig AppConfig
 	cleanenv.ReadEnv(&appConfig)
+	logger := httplog.NewLogger("httplog", httplog.Options{
+		JSON:             false,
+		LogLevel:         slog.LevelInfo,
+		Concise:          true,
+		RequestHeaders:   true,
+		MessageFieldName: "message",
+		QuietDownRoutes: []string{
+			"/healthz",
+		},
+		QuietDownPeriod: 600 * time.Second,
+	})
 
 	r := chi.NewRouter()
 	server := &App{
-		R:      r,
-		Config: appConfig,
+		R:          r,
+		Config:     appConfig,
+		HttpLogger: logger,
 	}
 
-	server.R.Use(middleware.RequestID)
-	server.R.Use(middleware.RealIP)
-	server.R.Use(middleware.Recoverer)
 	server.R.Use(middleware.NoCache)
-
-	// config for hsts middleware
-	hstsConf := &gosts.Info{
-		MaxAge:               60 * 60 * 24,
-		Expires:              time.Now().Add(24 * time.Hour),
-		IncludeSubDomains:    true,
-		SendPreloadDirective: false,
-	}
-	// middleware
-	gosts.Configure(hstsConf)
-	server.R.Use(gosts.Header)
+	server.R.Use(httplog.RequestLogger(logger))
 
 	return server
 }
