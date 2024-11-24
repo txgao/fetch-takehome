@@ -34,6 +34,32 @@ func (q *Queries) CreateReceipt(ctx context.Context, arg CreateReceiptParams) (u
 	return receipt_uuid, err
 }
 
+const createReceiptItem = `-- name: CreateReceiptItem :one
+INSERT INTO receipt_items
+(item_uuid, receipt_uuid)
+VALUES(
+    $1, $2
+)
+RETURNING receipt_uuid, item_uuid
+`
+
+type CreateReceiptItemParams struct {
+	ItemUuid    uuid.UUID `json:"item_uuid"`
+	ReceiptUuid uuid.UUID `json:"receipt_uuid"`
+}
+
+type CreateReceiptItemRow struct {
+	ReceiptUuid uuid.UUID `json:"receipt_uuid"`
+	ItemUuid    uuid.UUID `json:"item_uuid"`
+}
+
+func (q *Queries) CreateReceiptItem(ctx context.Context, arg CreateReceiptItemParams) (CreateReceiptItemRow, error) {
+	row := q.db.QueryRow(ctx, createReceiptItem, arg.ItemUuid, arg.ReceiptUuid)
+	var i CreateReceiptItemRow
+	err := row.Scan(&i.ReceiptUuid, &i.ItemUuid)
+	return i, err
+}
+
 const getItemsByReceipt = `-- name: GetItemsByReceipt :many
 SELECT i.item_uuid, i.price, i.short_description
 FROM receipt_items ri, item i
