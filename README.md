@@ -12,6 +12,8 @@
 2. Golang
 
 ### API Specification
+    Base URL: localhost:4000/api
+
     Path: /receipts/process
     Method: POST
     Payload: Receipt JSON
