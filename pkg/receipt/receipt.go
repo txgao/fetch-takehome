@@ -73,7 +73,7 @@ func NewService(options ...Option) *ReceiptService {
 
 }
 
-func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
+func (receiptSvc *ReceiptService) createReceiptInMem(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
 
 	uid := uuid.New()
 	receipt := inMemDb.Receipt{
@@ -93,11 +93,22 @@ func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params Crea
 	receiptSvc.inMem.Receipts[uid] = receipt
 
 	return receiptSvc.inMem.Receipts[uid].ReceiptUuid, nil
-
 }
 
-func (receiptSvc *ReceiptService) GetReceiptPoint(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
+func (receiptSvc *ReceiptService) createReceiptInDb(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
 
+	return uuid.Nil, nil
+}
+
+func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
+	if receiptSvc.pgDb != nil {
+		return receiptSvc.createReceiptInDb(ctx, params)
+	} else {
+		return receiptSvc.createReceiptInMem(ctx, params)
+	}
+}
+
+func (receiptSvc *ReceiptService) getReceiptPointInMem(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
 	result := int64(0)
 
 	receipt, ok := receiptSvc.inMem.Receipts[receipt_id]
@@ -109,7 +120,20 @@ func (receiptSvc *ReceiptService) GetReceiptPoint(ctx context.Context, receipt_i
 	result += calculateItemsPoints(receipt.Items)
 
 	return result, nil
+}
 
+func (receiptSvc *ReceiptService) getReceiptPointInDb(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
+
+	return int64(0), nil
+}
+
+func (receiptSvc *ReceiptService) GetReceiptPoint(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
+
+	if receiptSvc.pgDb != nil {
+		return receiptSvc.getReceiptPointInDb(ctx, receipt_id)
+	} else {
+		return receiptSvc.getReceiptPointInMem(ctx, receipt_id)
+	}
 }
 
 func countAlphanumeric(s string) int64 {
