@@ -13,6 +13,7 @@ import (
 	inMemDb "fetch-takehome/pkg/receipt/inMemDb"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -97,7 +98,36 @@ func (receiptSvc *ReceiptService) createReceiptInMem(ctx context.Context, params
 
 func (receiptSvc *ReceiptService) createReceiptInDb(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
 
-	return uuid.Nil, nil
+	receipt_uuid, err := receiptSvc.pgDb.CreateReceipt(ctx, db.CreateReceiptParams{
+		Total:        params.Total,
+		PurchaseTime: params.PurchaseTime,
+		Retailer:     params.Retailer,
+	})
+	if err != nil {
+		slog.Error("fail to create receipt", "err", err)
+		return uuid.Nil, err
+	}
+	for _, item := range params.Items {
+		item_uuid, err := receiptSvc.pgDb.CreateItem(ctx, db.CreateItemParams{
+			Price:            item.Price,
+			ShortDescription: stringToPgText(item.ShortDescription),
+		})
+		if err != nil {
+			slog.Error("fail to create item", "err", err)
+			return uuid.Nil, err
+		}
+
+		_, err = receiptSvc.pgDb.CreateReceiptItem(ctx, db.CreateReceiptItemParams{
+			ItemUuid:    item_uuid,
+			ReceiptUuid: receipt_uuid,
+		})
+		if err != nil {
+			slog.Error("fail to create receipt item", "err", err)
+			return uuid.Nil, err
+		}
+	}
+
+	return receipt_uuid, nil
 }
 
 func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
@@ -208,4 +238,11 @@ func calculateItemsPoints(items []inMemDb.Item) int64 {
 
 	return points
 
+}
+
+func stringToPgText(s string) pgtype.Text {
+	return pgtype.Text{
+		String: s,
+		Valid:  true,
+	}
 }
