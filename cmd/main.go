@@ -1,22 +1,25 @@
 package main
 
 import (
+	"context"
 	"fetch-takehome/app"
 	"fmt"
 	"net/url"
+	"os"
 
 	receiptH "fetch-takehome/api/receipt"
 	receiptSvc "fetch-takehome/pkg/receipt"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DBConfig struct {
-	Port     uint16 `env:"PORT" env-default:"5433"`
+	Port     uint16 `env:"PORT" env-default:"5432"`
 	Host     string `env:"HOST" env-default:"localhost"`
 	Database string `env:"DATABASE" env-default:"postgres"`
-	User     string `env:"USER" env-default:"content"`
+	User     string `env:"USER" env-default:"txgao"`
 	Password string `env:"PASSWORD" env-default:"pwd"`
 }
 
@@ -36,11 +39,14 @@ func main() {
 	cleanenv.ReadEnv(&config)
 
 	server := app.NewApp()
-	// dbconn, err := pgxpool.New(context.Background(), config.toDatabaseUrl())
-	// if err != nil {
-	// 	os.Exit(-1)
-	// }
-	receiptSvc := receiptSvc.NewService()
+	dbconn, err := pgxpool.New(context.Background(), config.toDatabaseUrl())
+	if err != nil {
+		os.Exit(-1)
+	}
+	receiptSvc := receiptSvc.NewService(
+		receiptSvc.WithDB(dbconn),
+	)
+	//receiptSvc := receiptSvc.NewService()
 
 	receiptHandler := receiptH.Handle{
 		ReceiptService: receiptSvc,
