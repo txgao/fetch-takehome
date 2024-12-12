@@ -161,7 +161,7 @@ func (receiptSvc *ReceiptService) getReceiptPointInDb(ctx context.Context, recei
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			slog.Error("receipt not found", "receipt id", receipt_id)
-			return result, err
+			return result, errorcode.ErrReceiptNotFound
 		}
 		slog.Error("fail to get receipt", "err", err)
 		return result, err
