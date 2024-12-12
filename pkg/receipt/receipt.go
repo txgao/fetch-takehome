@@ -2,6 +2,7 @@ package receipt
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"math"
 	"time"
@@ -13,6 +14,7 @@ import (
 	inMemDb "fetch-takehome/pkg/receipt/inMemDb"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -154,7 +156,42 @@ func (receiptSvc *ReceiptService) getReceiptPointInMem(ctx context.Context, rece
 
 func (receiptSvc *ReceiptService) getReceiptPointInDb(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
 
-	return int64(0), nil
+	result := int64(0)
+	receipt, err := receiptSvc.pgDb.GetReceiptById(ctx, receipt_id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("receipt not found", "receipt id", receipt_id)
+			return result, err
+		}
+		slog.Error("fail to get receipt", "err", err)
+		return result, err
+	}
+
+	receipt_inMem := inMemDb.Receipt{
+		ReceiptUuid:  receipt.ReceiptUuid,
+		Total:        receipt.Total,
+		Retailer:     receipt.Retailer,
+		PurchaseTime: receipt.PurchaseTime,
+	}
+
+	items_inMem := []inMemDb.Item{}
+	items, err := receiptSvc.pgDb.GetItemsByReceipt(ctx, receipt_id)
+	if err != nil {
+		slog.Error("fail to get receipt items", "err", err)
+		return result, err
+	}
+
+	for _, i := range items {
+		items_inMem = append(items_inMem, inMemDb.Item{
+			Price:            i.Price,
+			ShortDescription: i.ShortDescription.String,
+		})
+	}
+
+	result += calculateReceiptPoints(receipt_inMem)
+	result += calculateItemsPoints(items_inMem)
+
+	return result, nil
 }
 
 func (receiptSvc *ReceiptService) GetReceiptPoint(ctx context.Context, receipt_id uuid.UUID) (int64, error) {
