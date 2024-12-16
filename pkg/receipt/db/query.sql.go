@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5"
 )
 
 const createItem = `-- name: CreateItem :one
@@ -132,4 +133,36 @@ func (q *Queries) GetReceiptById(ctx context.Context, receiptUuid uuid.UUID) (Ge
 		&i.Retailer,
 	)
 	return i, err
+}
+
+type CreateItemForReceiptParams struct {
+	ReceiptUuid uuid.UUID `json:"receipt_uuid"`
+	ShortDescription pgtype.Text `json:"short_description"`
+	Price float64 `json:"price"`
+}
+
+func (q *Queries) CreateItemForReceipt(ctx context.Context, tx pgx.Tx, arg CreateItemForReceiptParams) (CreateReceiptItemRow, error) {
+	    // Wrap Queries with the transaction
+		queries := q.WithTx(tx)
+
+		itemUuid, err := queries.CreateItem(ctx, CreateItemParams{
+			Price:            arg.Price,
+			ShortDescription: arg.ShortDescription,
+		})
+		if err != nil {
+			return CreateReceiptItemRow{}, err
+		}
+	
+		receiptItem, err := queries.CreateReceiptItem(ctx, CreateReceiptItemParams{
+			ItemUuid:   itemUuid,
+			ReceiptUuid: arg.ReceiptUuid,
+		})
+		if err != nil {
+			return CreateReceiptItemRow{}, err
+		}
+	
+		return CreateReceiptItemRow{
+			ReceiptUuid: receiptItem.ReceiptUuid,
+			ItemUuid: receiptItem.ItemUuid,
+		}, err
 }
