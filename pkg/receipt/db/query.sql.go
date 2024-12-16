@@ -136,33 +136,42 @@ func (q *Queries) GetReceiptById(ctx context.Context, receiptUuid uuid.UUID) (Ge
 }
 
 type CreateItemForReceiptParams struct {
+	Items []CreateItemParams `json:"items"`
+	Receipt CreateReceiptParams `json:"receipt"`
+}
+type CreateItemForReceiptRow struct {
 	ReceiptUuid uuid.UUID `json:"receipt_uuid"`
-	ShortDescription pgtype.Text `json:"short_description"`
-	Price float64 `json:"price"`
+	Items []uuid.UUID `json:"items"`
 }
 
-func (q *Queries) CreateItemForReceipt(ctx context.Context, tx pgx.Tx, arg CreateItemForReceiptParams) (CreateReceiptItemRow, error) {
+func (q *Queries) CreateItemForReceipt(ctx context.Context, tx pgx.Tx, arg CreateItemForReceiptParams) (CreateItemForReceiptRow, error) {
 	    // Wrap Queries with the transaction
 		queries := q.WithTx(tx)
 
-		itemUuid, err := queries.CreateItem(ctx, CreateItemParams{
-			Price:            arg.Price,
-			ShortDescription: arg.ShortDescription,
-		})
+		receipt_uuid, err := queries.CreateReceipt(ctx, arg.Receipt)
 		if err != nil {
-			return CreateReceiptItemRow{}, err
+			return CreateItemForReceiptRow{}, err
+		}
+
+		receipt_items := []uuid.UUID{}
+		for _, i := range arg.Items{
+			itemUuid, err := queries.CreateItem(ctx, i)
+			if err != nil {
+				return CreateItemForReceiptRow{}, err
+			}
+		
+			r_i, err := queries.CreateReceiptItem(ctx, CreateReceiptItemParams{
+				ItemUuid:   itemUuid,
+				ReceiptUuid: receipt_uuid,
+			})
+			if err != nil {
+				return CreateItemForReceiptRow{}, err
+			}
+			receipt_items = append(receipt_items, r_i.ItemUuid)
 		}
 	
-		receiptItem, err := queries.CreateReceiptItem(ctx, CreateReceiptItemParams{
-			ItemUuid:   itemUuid,
-			ReceiptUuid: arg.ReceiptUuid,
-		})
-		if err != nil {
-			return CreateReceiptItemRow{}, err
-		}
-	
-		return CreateReceiptItemRow{
-			ReceiptUuid: receiptItem.ReceiptUuid,
-			ItemUuid: receiptItem.ItemUuid,
+		return CreateItemForReceiptRow{
+			ReceiptUuid: receipt_uuid,
+			Items: receipt_items,
 		}, err
 }

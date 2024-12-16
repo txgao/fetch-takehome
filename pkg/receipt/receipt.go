@@ -3,6 +3,7 @@ package receipt
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math"
 	"time"
@@ -102,45 +103,48 @@ func (receiptSvc *ReceiptService) createReceiptInMem(ctx context.Context, params
 
 func (receiptSvc *ReceiptService) createReceiptInDb(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
 
-	receipt_uuid, err := receiptSvc.pgDb.CreateReceipt(ctx, db.CreateReceiptParams{
+	receipt_params := db.CreateReceiptParams{
 		Total:        params.Total,
 		PurchaseTime: params.PurchaseTime,
 		Retailer:     params.Retailer,
+	}
+
+	item_params := []db.CreateItemParams{}
+	for _, item := range params.Items {
+		item_params = append(item_params, db.CreateItemParams{
+			Price:            item.Price,
+			ShortDescription: stringToPgText(item.ShortDescription),
+		})
+	}
+
+	// Start a transaction
+	tx, err := receiptSvc.pool.Begin(ctx)
+	if err != nil {
+		slog.Error("Unable to start transaction: %v", err)
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback(ctx)
+			panic(p)
+		} else if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			err = tx.Commit(ctx)
+		}
+	}()
+
+	receipt_items, err := receiptSvc.pgDb.CreateItemForReceipt(ctx, tx, db.CreateItemForReceiptParams{
+		Items:   item_params,
+		Receipt: receipt_params,
 	})
 	if err != nil {
-		slog.Error("fail to create receipt", "err", err)
+		slog.Error("fail to create receipt item", "err", err)
 		return uuid.Nil, err
 	}
-	for _, item := range params.Items {
 
-		// Start a transaction
-		tx, err := receiptSvc.pool.Begin(ctx)
-		if err != nil {
-			slog.Error("Unable to start transaction: %v", err)
-		}
-		defer func() {
-			if p := recover(); p != nil {
-				tx.Rollback(ctx)
-				panic(p)
-			} else if err != nil {
-				tx.Rollback(ctx)
-			} else {
-				err = tx.Commit(ctx)
-			}
-		}()
+	slog.Info(fmt.Sprintf("create receipt and %d items", len(receipt_items.Items)), "receipt_uuid", receipt_items.ReceiptUuid)
 
-		_, err = receiptSvc.pgDb.CreateItemForReceipt(ctx, tx, db.CreateItemForReceiptParams{
-			ReceiptUuid:      receipt_uuid,
-			ShortDescription: stringToPgText(item.ShortDescription),
-			Price:            item.Price,
-		})
-		if err != nil {
-			slog.Error("fail to create receipt item", "err", err)
-			return uuid.Nil, err
-		}
-	}
-
-	return receipt_uuid, nil
+	return receipt_items.ReceiptUuid, nil
 }
 
 func (receiptSvc *ReceiptService) CreateReceipt(ctx context.Context, params CreateReceiptParams) (uuid.UUID, error) {
