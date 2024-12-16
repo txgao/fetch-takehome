@@ -41,6 +41,7 @@ type (
 type ReceiptService struct {
 	pgDb  *db.Queries
 	inMem *inMemDb.InMemDB
+	pool  *pgxpool.Pool
 }
 
 const (
@@ -59,6 +60,7 @@ type Option func(*ReceiptService)
 
 func WithDB(dbPool *pgxpool.Pool) Option {
 	return func(rs *ReceiptService) {
+		rs.pool = dbPool
 		rs.pgDb = db.New(dbPool)
 	}
 }
@@ -110,18 +112,27 @@ func (receiptSvc *ReceiptService) createReceiptInDb(ctx context.Context, params 
 		return uuid.Nil, err
 	}
 	for _, item := range params.Items {
-		item_uuid, err := receiptSvc.pgDb.CreateItem(ctx, db.CreateItemParams{
-			Price:            item.Price,
-			ShortDescription: stringToPgText(item.ShortDescription),
-		})
-		if err != nil {
-			slog.Error("fail to create item", "err", err)
-			return uuid.Nil, err
-		}
 
-		_, err = receiptSvc.pgDb.CreateReceiptItem(ctx, db.CreateReceiptItemParams{
-			ItemUuid:    item_uuid,
-			ReceiptUuid: receipt_uuid,
+		// Start a transaction
+		tx, err := receiptSvc.pool.Begin(ctx)
+		if err != nil {
+			slog.Error("Unable to start transaction: %v", err)
+		}
+		defer func() {
+			if p := recover(); p != nil {
+				tx.Rollback(ctx)
+				panic(p)
+			} else if err != nil {
+				tx.Rollback(ctx)
+			} else {
+				err = tx.Commit(ctx)
+			}
+		}()
+
+		_, err = receiptSvc.pgDb.CreateItemForReceipt(ctx, tx, db.CreateItemForReceiptParams{
+			ReceiptUuid:      receipt_uuid,
+			ShortDescription: stringToPgText(item.ShortDescription),
+			Price:            item.Price,
 		})
 		if err != nil {
 			slog.Error("fail to create receipt item", "err", err)
