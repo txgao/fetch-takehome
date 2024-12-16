@@ -32,7 +32,7 @@ func NewApp() *App {
 	cleanenv.ReadEnv(&appConfig)
 	logger := httplog.NewLogger("httplog", httplog.Options{
 		JSON:             false,
-		LogLevel:         slog.LevelInfo,
+		LogLevel:         slog.LevelDebug,
 		Concise:          true,
 		RequestHeaders:   true,
 		MessageFieldName: "message",
@@ -41,6 +41,7 @@ func NewApp() *App {
 		},
 		QuietDownPeriod: 600 * time.Second,
 	})
+	slog.SetDefault(logger.Logger)
 
 	r := chi.NewRouter()
 	server := &App{
