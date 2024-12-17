@@ -121,25 +121,21 @@ func (receiptSvc *ReceiptService) createReceiptInDb(ctx context.Context, params 
 	tx, err := receiptSvc.pool.Begin(ctx)
 	if err != nil {
 		slog.Error("Unable to start transaction: %v", err)
+		return uuid.Nil, err
 	}
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback(ctx)
-			panic(p)
-		} else if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			err = tx.Commit(ctx)
-		}
-	}()
 
 	receipt_items, err := receiptSvc.pgDb.CreateItemForReceipt(ctx, tx, db.CreateItemForReceiptParams{
 		Items:   item_params,
 		Receipt: receipt_params,
 	})
 	if err != nil {
+		tx.Rollback(ctx)
 		slog.Error("fail to create receipt item", "err", err)
 		return uuid.Nil, err
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		slog.Error("fail to create receipt item", "err", err)
 	}
 
 	slog.Info(fmt.Sprintf("create receipt and %d items", len(receipt_items.Items)), "receipt_uuid", receipt_items.ReceiptUuid)
